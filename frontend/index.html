@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Bank</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Welcome to the Blood Bank</h1>
+    </header>
+
+    <main>
+        <section class="info">
+            <h2>Why Donate Blood?</h2>
+            <p>Blood donation helps save lives. One donation can help up to three people in need.</p>
+            <h2>Who Can Donate?</h2>
+            <ul>
+                <li>Aged between 18 and 65</li>
+                <li>Weigh at least 50 kg</li>
+                <li>Be in good health</li>
+            </ul>
+        </section>
+
+        <section class="user-options">
+            <h2>Existing User Login</h2>
+            <form id="login-form">
+                <input type="text" id="login-username" placeholder="Username" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <select id="login-role">
+                    <option value="donor">donor</option>
+                    <option value="receiver">receiver</option>
+                </select>
+                <button type="submit">Login</button>
+            </form>
+
+            <h2>New User Registration</h2>
+            <form id="register-form">
+                <input type="text" id="register-username" placeholder="Username" required>
+                <input type="password" id="register-password" placeholder="Password" required>
+                <select id="register-role">
+                    <option value="donor">donor</option>
+                    <option value="receiver">receiver</option>
+                </select>
+                <button type="submit">Register</button>
+            </form>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

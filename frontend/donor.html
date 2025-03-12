@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Page</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <button onclick="goBack()">Back</button>
+        <h1>Donor Portal</h1>
+    </header>
+
+    <main id="donor-content">
+        <h2>Enter Your Details</h2>
+        <form id="donor-form">
+            <input type="text" id="donor-name" placeholder="Name" required>
+            <input type="number" id="donor-age" placeholder="Age" required>
+            <input type="number" id="donor-weight" placeholder="Weight (kg)" required>
+            <input type="text" id="donor-location" placeholder="Location" required>
+            <button type="submit">Donate</button>
+        </form>
+        <p id="donation-info"></p>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
