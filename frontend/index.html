@@ -3,51 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blood Bank</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Blood Bank - Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+        header {
+            background-color: #d9534f;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 24px;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            padding: 20px;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .btn {
+            display: inline-block;
+            background-color: #d9534f;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            font-size: 18px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .btn:hover {
+            background-color: #c9302c;
+        }
+        footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #343a40;
+            color: white;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>Welcome to the Blood Bank</h1>
-    </header>
 
-    <main>
-        <section class="info">
-            <h2>Why Donate Blood?</h2>
-            <p>Blood donation helps save lives. One donation can help up to three people in need.</p>
-            <h2>Who Can Donate?</h2>
-            <ul>
-                <li>Aged between 18 and 65</li>
-                <li>Weigh at least 50 kg</li>
-                <li>Be in good health</li>
-            </ul>
-        </section>
+<header>
+    🩸 Blood Bank Management System
+</header>
 
-        <section class="user-options">
-            <h2>Existing User Login</h2>
-            <form id="login-form">
-                <input type="text" id="login-username" placeholder="Username" required>
-                <input type="password" id="login-password" placeholder="Password" required>
-                <select id="login-role">
-                    <option value="donor">donor</option>
-                    <option value="receiver">receiver</option>
-                </select>
-                <button type="submit">Login</button>
-            </form>
+<div class="container">
+    <div class="section">
+        <h2>About Our Blood Bank</h2>
+        <p>
+            Welcome to our Blood Bank Management System! Our platform connects **blood donors** and **receivers**, helping those in need find the right blood type quickly and efficiently.
+        </p>
+    </div>
 
-            <h2>New User Registration</h2>
-            <form id="register-form">
-                <input type="text" id="register-username" placeholder="Username" required>
-                <input type="password" id="register-password" placeholder="Password" required>
-                <select id="register-role">
-                    <option value="donor">donor</option>
-                    <option value="receiver">receiver</option>
-                </select>
-                <button type="submit">Register</button>
-            </form>
-        </section>
-    </main>
+    <div class="section">
+        <h2>Who Can Donate Blood?</h2>
+        <ul>
+            <li>✅ Age between 18-60 years</li>
+            <li>✅ Weight more than 50 kg</li>
+            <li>✅ No major diseases like HIV, Hepatitis, or Diabetes</li>
+            <li>✅ No recent surgeries or vaccinations</li>
+            <li>✅ Not under medication that affects blood donation</li>
+        </ul>
+    </div>
 
-    <script src="script.js"></script>
+    <div class="section" style="text-align: center;">
+        <h2>Ready to Donate or Receive Blood?</h2>
+        <a href="login.html" class="btn">Login</a>
+    </div>
+</div>
+
+<footer>
+    &copy; 2025 Blood Bank Management System | Made with ❤️
+</footer>
+
 </body>
 </html>

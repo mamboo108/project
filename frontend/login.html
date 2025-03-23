@@ -3,24 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Login / Register</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 350px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .message {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .toggle-section {
+            cursor: pointer;
+            color: #007bff;
+            text-decoration: underline;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
 
-    <header>
-        <h1>Login</h1>
-        <button onclick="window.location.href='index.html'">⬅ Back</button>
-    </header>
+    <div class="container">
+        <h2 id="formTitle">User Login</h2>
 
-    <main>
-        <form id="login-form">
-            <input type="text" id="username" placeholder="Enter Username" required>
-            <input type="password" id="password" placeholder="Enter Password" required>
-            <button type="submit">Login</button>
+        <form id="userForm">
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+
+            <div id="roleSection" style="display: none;">
+                <select id="role">
+                    <option value="">Select Role</option>
+                    <option value="donor">Donor</option>
+                    <option value="receiver">Receiver</option>
+                </select>
+            </div>
+
+            <button type="submit" id="submitButton">Login</button>
         </form>
-    </main>
 
-    <script src="script.js"></script>
+        <div class="message" id="message"></div>
+
+        <p class="toggle-section" id="toggleForm">New user? Register here</p>
+    </div>
+
+    <script>
+        let isRegistering = false;
+
+        document.getElementById("toggleForm").addEventListener("click", function() {
+            isRegistering = !isRegistering;
+            document.getElementById("formTitle").innerText = isRegistering ? "New User Registration" : "User Login";
+            document.getElementById("roleSection").style.display = isRegistering ? "block" : "none";
+            document.getElementById("submitButton").innerText = isRegistering ? "Register" : "Login";
+            this.innerText = isRegistering ? "Already have an account? Login here" : "New user? Register here";
+        });
+
+        document.getElementById("userForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const role = isRegistering ? document.getElementById("role").value : null;
+
+            const endpoint = isRegistering ? "register" : "login";
+            const userData = isRegistering ? { username, password, role } : { username, password };
+
+            try {
+                const response = await fetch(`http://localhost:5500/${endpoint}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(userData)
+                });
+
+                const data = await response.json();
+                const messageDiv = document.getElementById("message");
+
+                if (response.ok) {
+                    if (isRegistering) {
+                        // Redirect new users to donor/receiver details page based on role
+                        window.location.href = role === "donor" ? "donor.html" : "receiver.html";
+                    } else {
+                        // Save user details in localStorage
+                        localStorage.setItem("user", JSON.stringify(data.user_details));
+
+                        // Redirect existing users to donor/receiver dashboard
+                        window.location.href = data.role === "donor" ? "donor.html" : "receiver.html";
+                    }
+                } else {
+                    messageDiv.style.color = "red";
+                    messageDiv.innerText = data.message;
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                document.getElementById("message").innerText = "Server error. Try again later.";
+            }
+        });
+    </script>
+
 </body>
 </html>

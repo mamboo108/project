@@ -3,26 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receiver Page</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Receiver Registration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .message {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <button onclick="goBack()">Back</button>
-        <h1>Receiver Portal</h1>
-    </header>
 
-    <main>
-        <h2>Find Available Blood</h2>
-        <form id="receiver-form">
-            <input type="text" id="receiver-name" placeholder="Name" required>
-            <input type="number" id="receiver-age" placeholder="Age" required>
-            <input type="text" id="receiver-location" placeholder="Location" required>
-            <button type="submit">Find Blood</button>
+    <div class="container">
+        <h2>Receiver Registration</h2>
+        <form id="receiverForm">
+            <input type="text" id="name" placeholder="Full Name" required>
+            <input type="number" id="age" placeholder="Age" required>
+            <input type="text" id="location" placeholder="Location" required>
+
+            <select id="blood_group_id" required>
+                <option value="">Select Blood Group</option>
+                <option value="1">A+</option>
+                <option value="2">A-</option>
+                <option value="3">B+</option>
+                <option value="4">B-</option>
+                <option value="5">O+</option>
+                <option value="6">O-</option>
+                <option value="7">AB+</option>
+                <option value="8">AB-</option>
+            </select>
+
+            <button type="submit">Register as Receiver</button>
         </form>
-        <p id="blood-info"></p>
-    </main>
 
-    <script src="script.js"></script>
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        document.getElementById("receiverForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const name = document.getElementById("name").value;
+            const age = document.getElementById("age").value;
+            const location = document.getElementById("location").value;
+            const blood_group_id = document.getElementById("blood_group_id").value;
+
+            const receiverData = { name, age, blood_group_id, location };
+
+            try {
+                // Register Receiver
+                const response = await fetch("http://localhost:5500/receivers/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(receiverData)
+                });
+
+                const data = await response.json();
+                const messageDiv = document.getElementById("message");
+
+                if (!response.ok) {
+                    messageDiv.style.color = "red";
+                    messageDiv.innerHTML = `<p>${data.message}</p>`;
+                    return;
+                }
+
+                messageDiv.style.color = "green";
+                messageDiv.innerHTML = `<p>${data.message}</p>`;
+
+                // Now, search for available donors
+                const donorResponse = await fetch(`http://localhost:5500/blood/search?blood_group_id=${blood_group_id}&location=${location}`);
+                const donorData = await donorResponse.json();
+
+                if (!donorResponse.ok || donorData.donors.length === 0) {
+                    messageDiv.innerHTML += `<p>No donors found for this blood group in this location.</p>`;
+                    return;
+                }
+
+                let donorList = "<h3>Available Donors:</h3><ul>";
+                donorData.donors.forEach(donor => {
+                    donorList += `<li>${donor.name}, Age: ${donor.age}, Weight: ${donor.weight}kg</li>`;
+                });
+                donorList += "</ul>";
+                messageDiv.innerHTML += donorList;
+
+            } catch (error) {
+                console.error("Error:", error);
+                document.getElementById("message").innerHTML = "<p style='color:red;'>Server error. Try again later.</p>";
+            }
+        });
+    </script>
+
 </body>
 </html>

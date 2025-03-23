@@ -3,27 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Donor Page</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Donor Registration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .message {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <button onclick="goBack()">Back</button>
-        <h1>Donor Portal</h1>
-    </header>
 
-    <main id="donor-content">
-        <h2>Enter Your Details</h2>
-        <form id="donor-form">
-            <input type="text" id="donor-name" placeholder="Name" required>
-            <input type="number" id="donor-age" placeholder="Age" required>
-            <input type="number" id="donor-weight" placeholder="Weight (kg)" required>
-            <input type="text" id="donor-location" placeholder="Location" required>
-            <button type="submit">Donate</button>
+    <div class="container">
+        <h2>Donor Registration</h2>
+        <form id="donorForm">
+            <input type="text" id="name" placeholder="Full Name" required>
+            <input type="number" id="age" placeholder="Age" required>
+            <input type="number" id="weight" placeholder="Weight (kg)" required>
+            <input type="text" id="location" placeholder="Location" required>
+
+            <select id="blood_group_id" required>
+                <option value="">Select Blood Group</option>
+                <option value="1">A+</option>
+                <option value="2">A-</option>
+                <option value="3">B+</option>
+                <option value="4">B-</option>
+                <option value="5">O+</option>
+                <option value="6">O-</option>
+                <option value="7">AB+</option>
+                <option value="8">AB-</option>
+            </select>
+
+            <select id="disease_id" required>
+                <option value="">Select Disease (if any)</option>
+                <option value="1">Diabetes</option>
+                <option value="2">Hypertension</option>
+                <option value="3">Hepatitis</option>
+                <option value="4">Tuberculosis</option>
+                <option value="5">None</option> <!-- Corrected: None should have ID 5 -->
+            </select>
+
+            <button type="submit">Register as Donor</button>
         </form>
-        <p id="donation-info"></p>
-    </main>
 
-    <script src="script.js"></script>
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        document.getElementById("donorForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const name = document.getElementById("name").value;
+            const age = document.getElementById("age").value;
+            const weight = document.getElementById("weight").value;
+            const location = document.getElementById("location").value;
+            const blood_group_id = document.getElementById("blood_group_id").value;
+            const disease_id = document.getElementById("disease_id").value;
+
+            const messageDiv = document.getElementById("message");
+
+            // ✅ Allow donation ONLY IF disease_id = 5 (None)
+            if (disease_id !== "5") {
+                messageDiv.style.color = "red";
+                messageDiv.innerHTML = `<p>❌ You cannot donate blood due to medical conditions.</p>`;
+                return;
+            }
+            
+
+            
+
+            const donorData = { name, age, weight, location, disease_id, blood_group_id };
+
+            try {
+                const response = await fetch("http://localhost:5500/donors/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(donorData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageDiv.style.color = "green";
+                    messageDiv.innerHTML = `<p>${data.message}</p>`;
+
+                    if (data.hospital && data.hospital.name) {
+                        messageDiv.innerHTML += `<p>Donate at: <strong>${data.hospital.name}</strong>, ${data.hospital.location}</p>`;
+                    } else {
+                        messageDiv.innerHTML += `<p>No nearby hospital found.</p>`;
+                    }
+                } else {
+                    messageDiv.style.color = "red";
+                    messageDiv.innerHTML = `<p>${data.message}</p>`;
+                }
+                
+            
+            } catch (error) {
+                console.error("Error:", error);
+                messageDiv.innerHTML = "<p style='color:red;'>Server error. Try again later.</p>";
+            }
+        
+        });
+    </script>
+
 </body>
 </html>

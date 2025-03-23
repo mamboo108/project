@@ -29,42 +29,83 @@ app.get("/", (req, res) => {
 
 // 🔹 Donor Registration API
 app.post("/donors/register", (req, res) => {
-    const { name, age, weight, location, disease_id, blood_group_id } = req.body;
-  
-    if (!name || !age || !weight || !location || !blood_group_id) {
+  const { name, age, weight, location, disease_id, blood_group_id } = req.body;
+
+  console.log("📩 Donor Registration Request:", req.body);
+
+  if (!name || !age || !weight || !location || !blood_group_id) {
+      console.log("❌ Missing required fields");
       return res.status(400).json({ message: "All fields are required" });
-    }
-  
-    const sql = "INSERT INTO donors (name, age, weight, location, disease_id, blood_group_id) VALUES (?, ?, ?, ?, ?, ?)";
-    
-    db.query(sql, [name, age, weight, location, disease_id, blood_group_id], (err, result) => {
-      if (err) {
-        console.error("Error inserting donor:", err);
-        return res.status(500).json({ message: "Database error" });
+  }
+
+  console.log(`🔍 Checking disease ID: ${disease_id}`);
+
+  // Check if the disease ID is valid
+  const diseaseQuery = "SELECT * FROM diseases WHERE disease_id = ?";
+  db.query(diseaseQuery, [disease_id], (diseaseErr, diseaseResult) => {
+      if (diseaseErr) {
+          console.error("❌ Database Error - Checking Disease:", diseaseErr);
+          return res.status(500).json({ message: "Database error" });
       }
-  
-      // Now, fetch the nearest hospital
-      const hospitalQuery = "SELECT * FROM hospitals WHERE location = ? LIMIT 1";
-      
-      db.query(hospitalQuery, [location], (hospitalErr, hospitalResult) => {
-        if (hospitalErr) {
-          console.error("Error fetching nearest hospital:", hospitalErr);
-          return res.status(500).json({ message: "Hospital lookup error" });
-        }
-  
-        let hospitalInfo = null;
-        if (hospitalResult.length > 0) {
-          hospitalInfo = hospitalResult[0]; // Get the first matching hospital
-        }
-  
-        res.status(201).json({
-          message: "✅ Donor registered successfully!",
-          donor_id: result.insertId, // Return the new donor's ID
-          hospital: hospitalInfo || { message: "No hospital found in this location" }
-        });
-      });
-    });
+
+      console.log("🩺 Disease Query Result:", diseaseResult);
+
+      if (diseaseResult.length === 0) {
+          console.log("❌ Invalid Disease ID Provided");
+          return res.status(400).json({ message: "Invalid disease selection" });
+      }
+
+      // ✅ Allow donation ONLY IF disease_id = 5 (None)
+      if (parseInt(disease_id) !== 5) {
+          console.log(`❌ Donor cannot donate due to ${diseaseResult[0].name}`);
+          return res.status(400).json({
+              message: `❌ You cannot donate blood due to ${diseaseResult[0].name}.`
+          });
+      }
+
+      // Proceed with donor registration
+      registerDonor();
   });
+
+  function registerDonor() {
+      console.log("✅ Disease check passed, registering donor...");
+
+      const sql = "INSERT INTO donors (name, age, weight, location, disease_id, blood_group_id) VALUES (?, ?, ?, ?, ?, ?)";
+      db.query(sql, [name, age, weight, location, disease_id, blood_group_id], (err, result) => {
+          if (err) {
+              console.error("❌ Database Error - Inserting Donor:", err);
+              return res.status(500).json({ message: "Database error" });
+          }
+
+          console.log(`🩸 Donor Registered! Donor ID: ${result.insertId}`);
+
+          // Find the nearest hospital
+          const hospitalQuery = "SELECT * FROM hospitals WHERE location = ? LIMIT 1";
+          db.query(hospitalQuery, [location], (hospitalErr, hospitalResult) => {
+              if (hospitalErr) {
+                  console.error("❌ Database Error - Fetching Hospital:", hospitalErr);
+                  return res.status(500).json({ message: "Hospital lookup error" });
+              }
+
+              console.log("🏥 Nearest Hospital Result:", hospitalResult);
+
+              let hospitalInfo = hospitalResult.length > 0
+                  ? hospitalResult[0]
+                  : { message: "No hospital found in this location" };
+
+              res.status(201).json({
+                  message: "✅ Donor registered successfully!",
+                  donor_id: result.insertId,
+                  hospital: hospitalInfo
+              });
+          });
+      });
+  }
+});
+
+
+
+
 
 // 🔹 Receiver Registration API
 app.post("/receivers/register", (req, res) => {
@@ -178,7 +219,7 @@ app.get("/blood/search", (req, res) => {
   const bcrypt = require("bcrypt");
 
   // 🔑 User Login API (Donor or Receiver)
-  app.post("/login", (req, res) => {
+  app.post('/login', (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -188,7 +229,7 @@ app.get("/blood/search", (req, res) => {
     const sql = "SELECT * FROM users WHERE username = ?";
     db.query(sql, [username], (err, results) => {
         if (err) {
-            console.error("Error fetching user:", err);
+            console.error("❌ Error fetching user:", err);
             return res.status(500).json({ message: "Database error" });
         }
 
@@ -202,10 +243,72 @@ app.get("/blood/search", (req, res) => {
             return res.status(401).json({ message: "Invalid username or password" });
         }
 
-        res.status(200).json({ message: "✅ Login successful", role: user.role });
+        // Determine if user is a donor or receiver and fetch details
+        if (user.role === "donor") {
+            const donorQuery = `
+                SELECT donors.*, blood_groups.blood_type
+                FROM donors
+                JOIN blood_groups ON donors.blood_group_id = blood_groups.blood_group_id
+                WHERE donors.username = ?`;
+
+            db.query(donorQuery, [username], (donorErr, donorResults) => {
+                if (donorErr) {
+                    console.error("❌ Error fetching donor:", donorErr);
+                    return res.status(500).json({ message: "Database error" });
+                }
+
+                if (donorResults.length > 0) {
+                    const donor = donorResults[0];
+
+                    // Fetch nearest hospital
+                    const hospitalQuery = "SELECT * FROM hospitals WHERE location = ? LIMIT 1";
+                    db.query(hospitalQuery, [donor.location], (hospitalErr, hospitalResults) => {
+                        if (hospitalErr) {
+                            console.error("❌ Error fetching hospital:", hospitalErr);
+                            return res.status(500).json({ message: "Hospital lookup error" });
+                        }
+
+                        return res.status(200).json({
+                            message: "✅ Donor logged in successfully!",
+                            role: "donor",
+                            userDetails: donor,
+                            hospital: hospitalResults.length > 0 ? hospitalResults[0] : { message: "No hospital found in this location" }
+                        });
+                    });
+                } else {
+                    return res.status(200).json({ message: "No donor details found. Please complete registration.", role: "donor", askForDetails: true });
+                }
+            });
+
+        } else if (user.role === "receiver") {
+            const receiverQuery = `
+                SELECT receivers.*, blood_groups.blood_type
+                FROM receivers
+                JOIN blood_groups ON receivers.blood_group_id = blood_groups.blood_group_id
+                WHERE receivers.username = ?`;
+
+            db.query(receiverQuery, [username], (receiverErr, receiverResults) => {
+                if (receiverErr) {
+                    console.error("❌ Error fetching receiver:", receiverErr);
+                    return res.status(500).json({ message: "Database error" });
+                }
+
+                if (receiverResults.length > 0) {
+                    return res.status(200).json({
+                        message: "✅ Receiver logged in successfully!",
+                        role: "receiver",
+                        userDetails: receiverResults[0]
+                    });
+                } else {
+                    return res.status(200).json({ message: "No receiver details found. Please complete registration.", role: "receiver", askForDetails: true });
+                }
+            });
+
+        } else {
+            return res.status(400).json({ message: "Invalid user role." });
+        }
     });
 });
-
 
 
 // 🔹 User Registration API
