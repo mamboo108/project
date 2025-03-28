@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login / Register</title>
+    <title>Admin Login</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -19,7 +19,7 @@
             border-radius: 10px;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
         }
-        input, select, button {
+        input, button {
             width: 100%;
             padding: 10px;
             margin: 8px 0;
@@ -45,83 +45,135 @@
             text-decoration: underline;
             margin-top: 10px;
         }
+        .role-selection {
+            display: none;
+            margin-top: 10px;
+        }
+        .role-selection button {
+            width: 48%;
+            margin: 5px;
+        }
+        .table-container {
+            display: none;
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2 id="formTitle">User Login</h2>
+        <h2 id="formTitle">Admin Login</h2>
 
         <form id="userForm">
             <input type="text" id="username" placeholder="Username" required>
             <input type="password" id="password" placeholder="Password" required>
-
-            <div id="roleSection" style="display: none;">
-                <select id="role">
-                    <option value="">Select Role</option>
-                    <option value="donor">Donor</option>
-                    <option value="receiver">Receiver</option>
-                </select>
-            </div>
-
             <button type="submit" id="submitButton">Login</button>
         </form>
 
         <div class="message" id="message"></div>
 
         <p class="toggle-section" id="toggleForm">New user? Register here</p>
+        
+        <div class="role-selection" id="roleSelection">
+            <p>Select your role:</p>
+            <button onclick="location.href='donor.html'">Donor</button>
+            <button onclick="location.href='receiver.html'">Receiver</button>
+        </div>
+    </div>
+
+    <div class="table-container" id="tableContainer">
+        <h3>Donors Details</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Location</th>
+                    <th>Blood Group</th>
+                </tr>
+            </thead>
+            <tbody id="donorsTable">
+            </tbody>
+        </table>
+
+        <h3>Receivers Details</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Location</th>
+                    <th>Blood Group</th>
+                </tr>
+            </thead>
+            <tbody id="receiversTable">
+            </tbody>
+        </table>
     </div>
 
     <script>
-        let isRegistering = false;
-
         document.getElementById("toggleForm").addEventListener("click", function() {
-            isRegistering = !isRegistering;
-            document.getElementById("formTitle").innerText = isRegistering ? "New User Registration" : "User Login";
-            document.getElementById("roleSection").style.display = isRegistering ? "block" : "none";
-            document.getElementById("submitButton").innerText = isRegistering ? "Register" : "Login";
-            this.innerText = isRegistering ? "Already have an account? Login here" : "New user? Register here";
+            document.getElementById("roleSelection").style.display = "block";
         });
 
         document.getElementById("userForm").addEventListener("submit", async function(event) {
             event.preventDefault();
-
-            const username = document.getElementById("username").value;
-            const password = document.getElementById("password").value;
-            const role = isRegistering ? document.getElementById("role").value : null;
-
-            const endpoint = isRegistering ? "register" : "login";
-            const userData = isRegistering ? { username, password, role } : { username, password };
-
-            try {
-                const response = await fetch(`http://localhost:5500/${endpoint}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(userData)
-                });
-
-                const data = await response.json();
-                const messageDiv = document.getElementById("message");
-
-                if (response.ok) {
-                    if (isRegistering) {
-                        // Redirect new users to donor/receiver details page based on role
-                        window.location.href = role === "donor" ? "donor.html" : "receiver.html";
-                    } else {
-                        // Save user details in localStorage
-                        localStorage.setItem("user", JSON.stringify(data.user_details));
-
-                        // Redirect existing users to donor/receiver dashboard
-                        window.location.href = data.role === "donor" ? "donor.html" : "receiver.html";
+            
+            document.getElementById("message").innerText = "✅ Login Successful! Fetching data...";
+            document.getElementById("message").style.color = "green";
+            
+            fetch("http://localhost:5500/admin/data")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.donors && data.receivers) {
+                        document.getElementById("tableContainer").style.display = "block";
+                        const donorsTable = document.getElementById("donorsTable");
+                        const receiversTable = document.getElementById("receiversTable");
+                        donorsTable.innerHTML = "";
+                        receiversTable.innerHTML = "";
+                        
+                        data.donors.forEach(donor => {
+                            donorsTable.innerHTML += `<tr>
+                                <td>${donor.donor_id}</td>
+                                <td>${donor.name}</td>
+                                <td>${donor.age}</td>
+                                <td>${donor.location}</td>
+                                <td>${donor.blood_type}</td>
+                            </tr>`;
+                        });
+                        
+                        data.receivers.forEach(receiver => {
+                            receiversTable.innerHTML += `<tr>
+                                <td>${receiver.receiver_id}</td>
+                                <td>${receiver.name}</td>
+                                <td>${receiver.age}</td>
+                                <td>${receiver.location}</td>
+                                <td>${receiver.blood_type}</td>
+                            </tr>`;
+                        });
                     }
-                } else {
-                    messageDiv.style.color = "red";
-                    messageDiv.innerText = data.message;
-                }
-            } catch (error) {
-                console.error("Error:", error);
-                document.getElementById("message").innerText = "Server error. Try again later.";
-            }
+                })
+                .catch(error => {
+                    console.error("Error fetching data:", error);
+                    document.getElementById("message").innerText = "❌ Failed to fetch data.";
+                    document.getElementById("message").style.color = "red";
+                });
         });
     </script>
 
